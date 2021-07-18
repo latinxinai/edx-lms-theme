@@ -1,0 +1,36 @@
+# This is a workflow to automatically push theme changes to parent directory:
+#latinxinai/edx 
+name: Send submodule updates to lms repo 
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push request events for the main branch
+  push:
+    branches: [ main ]
+    
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  update:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Steps for this job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+          #sets parent directory 
+          repository: latinxinai/edx
+          #TODO: generate private access token for permissions to write to parent.
+          token: ${{secrets.PRIVATE_TOKEN_GITHUB}}
+      # Pulls theme updates to (or *from*) parent repo using the runner shell
+      - name: Pull custom theme submodule updates
+        run: |
+          git submodule update --init --recursive
+          git submodule update --recursive --remote
+      # Commits changes to parent_theme:main branch if any, or notifies otherwise
+      - name: Commit
+        run: |
+          git config user.email "actions@github.com" 
+          git config user.name "GitHub Actions - update submodules"
+          git add --all 
+          git commit -m "Update submodules" || echo "Submodules are up-to-date."
+          git push
